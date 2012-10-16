@@ -684,7 +684,7 @@ function quick_donate_submit_edit_payment_method($form, $form_state) {
   module_load_include('inc', 'fundraiser', 'fundraiser_billing');
   $values = $form_state['values'];
 
-  $payment_details = _fundraiser_get_payment_details($values['order_id']);
+  //$payment_details = _fundraiser_get_payment_details($values['order_id']);
 
   $billing_info = array(
     'master_order_id' =>  $values['order_id'],
@@ -701,7 +701,7 @@ function quick_donate_submit_edit_payment_method($form, $form_state) {
     'card_exp_date' => $values['cc_exp_date'],
     'card_cvv' => $values['cc_cvv'],
   );
-  $ret = fundraiser_update_billing_info($values['gateway_type'], $values['ref_id'], $billing_info, $values['gateway_id']);
+  $ret = fundraiser_update_billing_info($values['gateway_id'], $values['ref_id'], $billing_info);
   if (isset($ret['success']) && $ret['success'] == 1) {
     quick_donate_update_payment_method($values['pid'], $billing_info);
     drupal_set_message(t('Your payment details have been updated'));
