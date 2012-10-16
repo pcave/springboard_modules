@@ -1,0 +1,8 @@
+name = Fundraiser quick donate
+description = Enables single-click donations for users that have enrolled in Quick Donate.
+dependencies[] = fundraiser
+dependencies[] = uc_order
+dependencies[] = uc_store
+dependencies[] = mimemail
+package = Jackson River Springboard - extras
+core = 6.x

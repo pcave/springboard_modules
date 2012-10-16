@@ -1,0 +1,258 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function quick_donate_install() {
+  drupal_install_schema('quick_donate');
+  
+  // create quick donate registration profile field. Gotta have one if we want
+  // to sync registration details to the Salesforce contact.
+  //
+  // Can you believe the profile module doesn't have a function/hook for this? True story.
+  // @see http://drupal.org/node/730554
+  $fields = array(
+    'profile_quick_donate' => array(
+      'title' => 'quick donate registration',
+      'name' => 'profile_quick_donate',
+      'explanation' => '',
+      'category' => 'system',
+      'type' => 'checkbox',
+      'weight' => 0,
+      'required' => 0,
+      'register' => 0,
+      'visibility' => 4,
+      'autocomplete' => 0,
+      'options' => '',
+      'page' => ''
+    ),
+  );
+  
+  foreach ($fields as $key => $field) {
+    $fid = db_result(db_query("SELECT fid FROM {profile_fields WHERE name ='%s'", $field['name']));
+    if (!$fid) {
+      db_query("
+        INSERT INTO {profile_fields} (
+          title,
+          name,
+          explanation,
+          category,
+          type,
+          weight,
+          required,
+          register,
+          visibility,
+          autocomplete,
+          options,
+          page
+        )
+        VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, '%s', '%s')",
+          $field['title'],
+          $field['name'],
+          $field['explanation'],
+          $field['category'],
+          $field['type'],
+          $field['weight'],
+          $field['required'],
+          $field['register'],
+          $field['visibility'],
+          $field['autocomplete'],
+          $field['options'],
+          $field['page']
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function quick_donate_uninstall() {
+  drupal_uninstall_schema('quick_donate');
+
+  // registration config
+  variable_del('quick_donate_registration_message');
+  variable_del('quick_donate_thank_you_page');
+
+  // registration email config
+  variable_del('quick_donate_registration_confirmations');
+  variable_del('quick_donate_registration_from_address');
+  variable_del('quick_donate_registration_from_name');
+  variable_del('quick_donate_registration_bcc_address');
+  variable_del('quick_donate_registration_subject');
+  variable_del('quick_donate_registration_html_email');
+  variable_del('quick_donate_registration_text_email');
+  variable_del('quick_donate_register_sustainers');
+  variable_del('quick_donate_auth_lede');
+  variable_del('quick_donate_2nd_auth_period');
+
+  // TODO: decide if the profile field we created in hook_install should also be deleted here.
+}
+
+/**
+ * Implements hook_schema().
+ */
+function quick_donate_schema() {
+
+// TODO: verify payment gateway tokens don't exceed 255 characters in length.
+  $schema['quick_donate'] = array(
+    'description' => t(''),
+    'fields' => array(
+      'nid' => array(
+        'description' => t('node id'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'quick_donate_enabled' => array(
+        'description' => t('quick donate enabled'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'display' => array(
+        'description' => t('where to display the quick donate registration form'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('nid'),
+  );
+  $schema['quick_donate_registration'] = array(
+    'description' => t('Stores user registration information for users subscribed to the quick donate feature.'),
+    'fields' => array(
+      'uid' => array(
+        'description' => t('User id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'registration_complete' => array(
+        'description' => t('Registration flag'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'user_phone' => array(
+        'description' => t('user telephone number.'),
+        'type' => 'varchar',
+        'length' => '255',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('uid'),
+  );
+  // TODO: add table indexes.
+  $schema['quick_donate_payment_methods'] = array(
+    'description' => t('Stores user payment methods.'),
+    'fields' => array(
+      'pid' => array(
+        'description' => t('Payment method id'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => t('User id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'sid' => array(
+        'description' => t('Webform submission id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'gateway_id' => array(
+        'description' => t('Payment gateway id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'order_id' => array(
+        'description' => t('Ubercart order id.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'billing_first_name' => array(
+        'description' => t('CC First Name'),
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+      'billing_last_name' => array(
+        'description' => t('CC Last Name'),
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+      'billing_street1' => array(
+        'description' => t('Billing address line 1'),
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+      'billing_street2' => array(
+        'description' => t('Billing address line 2'),
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+      'billing_city' => array(
+        'description' => t('Billing city'),
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+      'billing_zone' => array(
+        'description' => 'The state/zone/province ID where the bill will be sent.',
+        'type' => 'int',
+        'size' => 'medium',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'billing_postal_code' => array(
+        'description' => t('CC First Name'),
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+      'billing_country' => array(
+        'description' => 'The country ID where the bill will be sent.',
+        'type' => 'int',
+        'size' => 'medium',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'ref_token' => array(
+        'description' => t('Reference ID'),
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+      'data' => array(
+        'description' => t('CC data'),
+        'type' => 'text',
+      ),
+      'valid' => array(
+        'description' => t('gateway validation flag, 0 if method fails at gateway'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('pid'),
+  );
+  return $schema;
+}
