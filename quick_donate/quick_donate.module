@@ -543,7 +543,7 @@ function quick_donate_update_payment_method($pid, $details) {
   $data['cc_data']['cc_exp_month'] = $details['card_exp_date']['month'];
   $data['cc_data']['cc_exp_year'] = $details['card_exp_date']['year'];
   $data['cc_data']['cc_cvv'] = $details['card_cvv'];
-  $data['cc_data'] = $crypt->encrypt(uc_credit_encryption_key(), serialize($cc_data));
+  $data['cc_data'] = $crypt->encrypt(uc_credit_encryption_key(), serialize($data['cc_data']));
   uc_store_encryption_errors($crypt, 'uc_credit');
   
   $data = serialize($data);

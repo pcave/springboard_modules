@@ -696,11 +696,13 @@ function quick_donate_submit_edit_payment_method($form, $form_state) {
     'card_cvv' => $values['cc_cvv'],
   );
   $ret = fundraiser_update_billing_info($values['gateway_type'], $values['ref_id'], $billing_info, $values['gateway_id']);
-  drupal_set_message('ret:<pre>' . print_r($ret, TRUE) . '</pre>');
-  if ($ret->messages->resultCode == 'Ok') {
+  if (isset($ret['success']) && $ret['success'] == 1) {
     quick_donate_update_payment_method($values['pid'], $billing_info);
-    drupal_set_message('Your payment details have been updated');
+    drupal_set_message(t('Your payment details have been updated'));
     return $form['#redirect'];
+  }
+  else {
+    drupal_set_message(t('There was a problem updating your payment method details. Please contact the site administrator.'));
   }
 }
 
