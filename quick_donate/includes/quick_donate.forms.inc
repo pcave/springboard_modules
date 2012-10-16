@@ -537,6 +537,10 @@ function quick_donate_edit_payment_method($edit, $account, $method) {
     '#type' => 'value',
     '#value' => $method['ref_token'],
   );
+  $form['order_id'] = array(
+    '#type' => 'value',
+    '#value' => $method['order_id'],
+  );
   $form['billing_first_name'] = array(
     '#type' => 'textfield',
     '#title' => t('First name'),
@@ -679,7 +683,9 @@ function quick_donate_validate_edit_payment_method(&$form, &$form_state) {
 function quick_donate_submit_edit_payment_method($form, $form_state) {
   module_load_include('inc', 'fundraiser', 'fundraiser_billing');
   $values = $form_state['values'];
-  
+
+  $payment_details = _fundraiser_get_payment_details($values['order_id']);
+
   $billing_info = array(
     'master_order_id' =>  $values['order_id'],
     'first_name' => $values['billing_first_name'],
