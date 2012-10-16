@@ -378,6 +378,7 @@ function quick_donate_fundraiser_order_failure($order_id) {
 function quick_donate_register_user($uid, $registration_complete) {
 
   $account = user_load(array('uid' => $uid));
+
   $send_registration_email = FALSE;
   if (!quick_donate_user_is_registered($uid) && variable_get('quick_donate_registration_confirmations', 1)) {
     $send_registration_email = TRUE;
@@ -387,9 +388,15 @@ function quick_donate_register_user($uid, $registration_complete) {
   
   // update profile field
   $edit = array(
-    'profile_quick_donate' => '1',
+    'profile_wuick_donate' => 1,
   );
-  profile_save_profile($edit, $account, 'system');
+  $fid = db_result(db_query('SELECT fid FROM {profile_fields} WHERE name = "profile_quick_donate"'));
+  
+  // This is gratuitous, however in testing profile_save_profile() refused to cooperate in a predictable fashion.
+
+  db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $field->fid, $account->uid);
+  db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, 1)", $fid, $account->uid);
+  
   
   _quick_donate_queue_save($account);
 

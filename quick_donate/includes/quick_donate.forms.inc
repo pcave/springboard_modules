@@ -306,6 +306,7 @@ function quick_donate_process_donation($form, $form_state) {
 
 
 function quick_donate_register($edit, $nid, $sid) {
+  drupal_set_message('hello');
   // temporarily disable sid security so the form submission doesn't catch a 403 error.
   db_query('DELETE FROM {fundraiser_secure} WHERE sid=%d', $sid);
   $fundraiser_data = _quick_donate_fundraiser_order_data(array('sid' => $sid));
@@ -382,6 +383,7 @@ function quick_donate_validate_registration(&$form, $form_state) {
  * Submit callback for confirmation page registration form.
  */
 function quick_donate_submit_registration($form, $form_state) {
+  drupal_set_message('oh hai');
   global $user;
   $uid = $form_state['values']['uid'];
   $gateway_id = $form_state['values']['gateway_id'];
@@ -398,7 +400,9 @@ function quick_donate_submit_registration($form, $form_state) {
     $user = user_load($uid);
     sess_regenerate();
   }*/
+
   return $form['#redirect'];
+ 
 }
 
 function quick_donate_payment_methods($account) {
