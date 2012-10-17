@@ -148,7 +148,7 @@ function quick_donate_validate_donation(&$form, $form_state) {
  * ask amounts, user profile settings, and the user's payment method details.
  */
 function quick_donate_process_donation($form, $form_state) {
-
+   drupal_set_message('values:<pre>' . print_r($form_state['values'], TRUE) . '</pre>');
     global $user;
     $account = $user;
     if (!isset($account->quick_donate_registered)) {
@@ -233,7 +233,7 @@ function quick_donate_process_donation($form, $form_state) {
 
           if ($field->form_key === 'recurs_monthly' && isset($form_state['values']['recurs_monthly'])) {
 
-           if ($form_state['values']['recurs_monthly'] == 'recurs') {
+           if ($form_state['values']['recurs_monthly']['recurs'] == 'recurs') {
               $save['recurs_monthly'] = 'recurs';
             }
             break;
