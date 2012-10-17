@@ -387,25 +387,20 @@ function quick_donate_register_user($uid, $registration_complete) {
   db_query("INSERT INTO {quick_donate_registration} (uid, registration_complete) VALUES (%d, %d)", $uid, $registration_complete);
   
   // update profile field
-  $edit = array(
-    'profile_wuick_donate' => 1,
-  );
-  $fid = db_result(db_query('SELECT fid FROM {profile_fields} WHERE name = "profile_quick_donate"'));
-  
   // This is gratuitous, however in testing profile_save_profile() refused to cooperate in a predictable fashion.
-
+  $fid = db_result(db_query('SELECT fid FROM {profile_fields} WHERE name = "profile_quick_donate"'));
   db_query("DELETE FROM {profile_values} WHERE fid = %d AND uid = %d", $field->fid, $account->uid);
   db_query("INSERT INTO {profile_values} (fid, uid, value) VALUES (%d, %d, 1)", $fid, $account->uid);
   
   
   _quick_donate_queue_save($account);
 
-  if ($send_registration_email) {
+  if ($send_registration_email && $account->uid) {
     module_load_include('module', 'mimemail');
     module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
     $settings = quick_donate_registration_mail_settings($account);
-    $settings['body'] = token_replace($settings['body'], 'quick donate', $occount);
-    $settings['text'] = token_replace($settings['text'], 'quick donate', $account);
+    $settings['body'] = token_replace($settings['body'], 'quick_donate', $occount);
+    $settings['text'] = token_replace($settings['text'], 'quick_donate', $account);
     mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
   }
 }
@@ -811,7 +806,7 @@ function quick_donate_token_list($type = 'all') {
 function quick_donate_token_values($type, $object = NULL) {
   $values = array();
   switch ($type) {
-    case 'quick donate':
+    case 'quick_donate':
       $values['login-link-html'] = quick_donate_login_link($object->uid);
       $values['login-link-text'] = quick_donate_login_link($object->uid, FALSE);
       break;

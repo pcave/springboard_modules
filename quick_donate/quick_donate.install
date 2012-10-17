@@ -85,6 +85,7 @@ function quick_donate_uninstall() {
   variable_del('quick_donate_register_sustainers');
   variable_del('quick_donate_auth_lede');
   variable_del('quick_donate_2nd_auth_period');
+  variable_del('quick_donate_registration_button');
 
   // TODO: decide if the profile field we created in hook_install should also be deleted here.
 }
