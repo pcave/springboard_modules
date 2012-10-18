@@ -11,6 +11,7 @@ function quick_donate_donation_form($edit, $nid) {
 
   module_load_include('module', 'webform');
   module_load_include('module', 'uc_store');
+  drupal_add_js(drupal_get_path('module', 'quick_donate') . '/js/quick_donate.js');
   $webform_node = node_load(array('nid' => $nid));
   global $user;
   $account = $user;
@@ -156,7 +157,7 @@ function quick_donate_process_donation($form, $form_state) {
     }
 
     $method = quick_donate_payment_method_load($form_state['values']['method_select']);
-    
+    drupal_set_message('method:<pre>' . print_r($method, TRUE) . '</pre>');
     $nid = $form_state['values']['webform_nid'];
     $node = node_load(array('nid' => $nid));
     $ask_amount = is_numeric($form_state['values']['amount']) ? $form_state['values']['amount'] : $form_state['values']['other_amount'];
