@@ -262,14 +262,15 @@ function quick_donate_form_alter(&$form, $form_state, $form_id) {
       fundraiser_disable_elements($form);
     }
   }
+  
   // If you are looking for the code that reduces donation forms to ask amount components and a submit button
   // it isn't here. Go take a look at hook_menu_alter() and quick_donate_donation_form()
 }
 
+
 function quick_donate_webform_validate(&$form, $form_state) {
-  // TODO: find out how phone numbers will be formatted by the SMS service and validate accordingly.
-  // Also, see @http://stackoverflow.com/questions/3090862/how-to-validate-phone-number-using-php for a brief note on
-  // why validation is going to be a wormhole.
+  // Nothing to do here unless/until phone numbers become a relevant concern, then we'll need to
+  // do input validation on a potentially international phone number field, god help us all.
 }
 
 /**
@@ -339,7 +340,7 @@ function quick_donate_fundraiser_order_success($order) {
   if (variable_get('quick_donate_register_sustainers', 0) && $order->data['recurring_status'] == 1) {
     drupal_set_message('Thank you for enrolling in Quick Donate');
     if (!$payment_methods && $ref_token) {
-      quick_donate_register_user($uid, 0);
+      quick_donate_register_user($order->uid, 0);
       quick_donate_save_payment_method($order->uid, $order->data['gateway'], $ref_token, $order->order_id, $webform_info['sid']);
     }
   }
@@ -399,7 +400,7 @@ function quick_donate_register_user($uid, $registration_complete) {
     module_load_include('module', 'mimemail');
     module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
     $settings = quick_donate_registration_mail_settings($account);
-    $settings['body'] = token_replace($settings['body'], 'quick_donate', $occount);
+    $settings['body'] = token_replace($settings['body'], 'quick_donate', $account);
     $settings['text'] = token_replace($settings['text'], 'quick_donate', $account);
     mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
   }
@@ -807,8 +808,11 @@ function quick_donate_token_values($type, $object = NULL) {
   $values = array();
   switch ($type) {
     case 'quick_donate':
-      $values['login-link-html'] = quick_donate_login_link($object->uid);
-      $values['login-link-text'] = quick_donate_login_link($object->uid, FALSE);
+      if (isset($object->uid) && $object->uid) {
+
+        $values['login-link-html'] = quick_donate_login_link($object->uid);
+        $values['login-link-text'] = quick_donate_login_link($object->uid, FALSE);
+      }
       break;
   }
   return $values;

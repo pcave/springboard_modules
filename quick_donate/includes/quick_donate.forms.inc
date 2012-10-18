@@ -317,6 +317,7 @@ function quick_donate_register($edit, $nid, $sid) {
   $data = serialize($order->data);
 
   $uid = $order->uid;
+  drupal_set_message("form build uid:$uid");
   $ref_token = _quick_donate_get_token_from_order($order);
 
   $form['nid'] = array(
@@ -384,7 +385,7 @@ function quick_donate_validate_registration(&$form, $form_state) {
  * Submit callback for confirmation page registration form.
  */
 function quick_donate_submit_registration($form, $form_state) {
-
+  
   global $user;
   $uid = $form_state['values']['uid'];
   $gateway_id = $form_state['values']['gateway_id'];
