@@ -80,6 +80,13 @@ function quick_donate_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'includes/quick_donate.forms.inc',
   );
+  $items['quick_donate_cron'] = array(
+    'title' => 'Process mainenance tasks',
+    'page callback' => 'quick_donate_cron_tasks',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/quick_donate.cron.inc',
+  );
   return $items;
 }
 

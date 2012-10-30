@@ -41,38 +41,45 @@ function quick_donate_admin() {
   );
   
 
-  // user confirmation email settings
+  // email settings
   $form['email_settings'] = array(
     '#type'=> 'fieldset',
-    '#title' => t('Registration email settings'),
+    '#title' => t('Email settings'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $form['email_settings']['quick_donate_registration_confirmations'] = array(
+  $form['email_settings']['registration'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Quick Donate Registration Email'),
+    '#description' => t('Configure mail template & settings when a user enrolls in Quick Donate'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['email_settings']['registration']['quick_donate_registration_confirmations'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable Quick Donate registration emails on signup'),
     '#description' => t('When enabled any user who signs up for Quick Donate will receive a registration email using the template settings below.'),
     '#default_value' => variable_get('quick_donate_registration_confirmations', '1'),
   );
-  $form['email_settings']['quick_donate_registration_from_address'] = array(
+  $form['email_settings']['registration']['quick_donate_registration_from_address'] = array(
     '#type' => 'textfield',
     '#title' => t('From email'),
     '#description' => t(''),
     '#default_value' => variable_get('quick_donate_registration_from_address', ''),
   );
-  $form['email_settings']['quick_donate_registration_from_name'] = array(
+  $form['email_settings']['registration']['quick_donate_registration_from_name'] = array(
     '#type' => 'textfield',
     '#title' => t('From name'),
     '#description' => t(''),
     '#default_value' => variable_get('quick_donate_registration_from_name', ''),
   );
-  $form['email_settings']['quick_donate_registration_bcc_address'] = array(
+  $form['email_settings']['registration']['quick_donate_registration_bcc_address'] = array(
     '#type' => 'textfield',
     '#title' => t('BCC'),
     '#description' => t('Comma separated list of email addresses that will recieve a BCC copy of any Quick Donate registration emails. (example: test@example.com,test2@example.com)'),
     '#default_value' => variable_get('quick_donate_registration_bcc_address', ''),
   );
-  $form['email_settings']['quick_donate_registration_subject'] = array(
+  $form['email_settings']['registration']['quick_donate_registration_subject'] = array(
     '#type' => 'textfield',
     '#title' => t('Subject'),
     '#description' => t('The subject line for Quick Donate registration emails.'),
@@ -80,44 +87,121 @@ function quick_donate_admin() {
   );
   // html message
   // text message
-  $form['email_settings']['quick_donate_registration_html_email'] = array(
+  $form['email_settings']['registration']['quick_donate_registration_html_email'] = array(
     '#type' => 'textarea',
     '#title' => t('HTML message'),
     '#description' => t('HTML version of the Quick Donate registration email.'),
     '#default_value' => variable_get('quick_donate_registration_html_email', ''),
   );
-  $form['email_settings']['html_tokens'] = array(
+  $form['email_settings']['registration']['html_tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('available tokens'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $form['email_settings']['html_tokens']['quick_donate_html_token_help'] = array(
+  $form['email_settings']['registration']['html_tokens']['quick_donate_registration_html_token_help'] = array(
     '#type' => 'markup',
     '#value' => theme('token_help', 'quick_donate'),
   );
-  $form['email_settings']['quick_donate_registration_text_email'] = array(
+  $form['email_settings']['registration']['quick_donate_registration_text_email'] = array(
     '#type' => 'textarea',
     '#title' => t('Text message'),
     '#description' => t('Plaintext version of the Quick Donate registration email.'),
     '#default_value' => variable_get('quick_donate_registration_text_email', ''),
   );
-  $form['email_settings']['text_tokens'] = array(
+  $form['email_settings']['registration']['text_tokens'] = array(
     '#type' => 'fieldset',
     '#title' => t('available tokens'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $form['email_settings']['text_tokens']['quick_donate_text_token_help'] = array(
+  $form['email_settings']['registration']['text_tokens']['quick_donate_registration_text_token_help'] = array(
     '#type' => 'markup',
     '#value' => theme('token_help', 'quick_donate'),
   );
+  
+  // card expiring message
+  $form['email_settings']['card_expiration'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Quick Donate card_expiration Email'),
+    '#description' => t('Configure mail template & settings when a user enrolls in Quick Donate'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['email_settings']['card_expiration']['quick_donate_card_expiration_confirmations'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable Quick Donate card_expiration emails on signup'),
+    '#description' => t('When enabled any user who signs up for Quick Donate will receive a card expiration email using the template settings below.'),
+    '#default_value' => variable_get('quick_donate_card_expiration_confirmations', '1'),
+  );
+  $form['email_settings']['card_expiration']['quick_donate_card_expiration_from_address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('From email'),
+    '#description' => t(''),
+    '#default_value' => variable_get('quick_donate_card_expiration_from_address', ''),
+  );
+  $form['email_settings']['card_expiration']['quick_donate_card_expiration_from_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('From name'),
+    '#description' => t(''),
+    '#default_value' => variable_get('quick_donate_card_expiration_from_name', ''),
+  );
+  $form['email_settings']['card_expiration']['quick_donate_card_expiration_bcc_address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('BCC'),
+    '#description' => t('Comma separated list of email addresses that will recieve a BCC copy of any Quick Donate card_expiration emails. (example: test@example.com,test2@example.com)'),
+    '#default_value' => variable_get('quick_donate_card_expiration_bcc_address', ''),
+  );
+  $form['email_settings']['card_expiration']['quick_donate_card_expiration_subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Subject'),
+    '#description' => t('The subject line for Quick Donate card_expiration emails.'),
+    '#default_value' => variable_get('quick_donate_card_expiration_subject', ''),
+  );
+  // html message
+  // text message
+  $form['email_settings']['card_expiration']['quick_donate_card_expiration_html_email'] = array(
+    '#type' => 'textarea',
+    '#title' => t('HTML message'),
+    '#description' => t('HTML version of the Quick Donate card expiration email.'),
+    '#default_value' => variable_get('quick_donate_card_expiration_html_email', ''),
+  );
+  $form['email_settings']['card_expiration']['html_tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('available tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['email_settings']['card_expiration']['html_tokens']['quick_donate_card_expiration_html_token_help'] = array(
+    '#type' => 'markup',
+    '#value' => theme('token_help', 'quick_donate'),
+  );
+  $form['email_settings']['card_expiration']['quick_donate_card_expiration_text_email'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Text message'),
+    '#description' => t('Plaintext version of the Quick Donate card expiration email.'),
+    '#default_value' => variable_get('quick_donate_card_expiration_text_email', ''),
+  );
+  $form['email_settings']['card_expiration']['text_tokens'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('available tokens'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['email_settings']['card_expiration']['text_tokens']['quick_donate_card_expiration_text_token_help'] = array(
+    '#type' => 'markup',
+    '#value' => theme('token_help', 'quick_donate'),
+  );
+  
+    
+  // authentication settings.
   $form['auth_settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Authentication & Security'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
+
   $form['auth_settings']['quick_donate_2nd_auth_period'] = array(
     '#type' => 'textfield',
     '#title' => t('2nd auth duration'),
@@ -131,81 +215,7 @@ function quick_donate_admin() {
     '#description' => t('A message to display to the user explaining the need for the authentication page guarding the payment method details pages.'),
     '#default_value' => variable_get('quick_donate_auth_lede', t('For your protection you must reauthenticate to view payment method details.')),
   );
-  /*
-    $form['email_settings']['quick_donate_sustainer_upgrade_confirmations'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable confirmation emails when a sustainer is upgraded.'),
-    '#description' => t('If enabled a confirmation email will be sent when a sustainer upgrades to a higher donation amount.'),
-    '#default_value' => variable_get('quick_donate_sustainer_upgrade_confirmations', '0'),
-  );
-    $form['email_settings']['quick_donate_sustainer_conversion_confirmations'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable confirmation emails on sustainer conversions'),
-    '#description' => t('If enabled a confirmation email will be sent when a donor converts to a sustainer.'),
-    '#default_value' => variable_get('quick_donate_sustainer_conversion_confirmations', '0'),
-  );
-  
-  // Service response settings, these responses are sent to the service caller and may differ from
-  // confirmations sent to the user via other means.
-    $form['response_settings'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Response settings'),
-    '#description' => t('Configure the responses sent to 3rd party services.'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  
-  // donation service response
-  $form['response_settings']['quick_donate_donation_response'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Donation response message (text only, no markup)'),
-    '#description' => t(''),
-    '#default_value' => variable_get('quick_donate_donation_response', t('')),
-  );
-  $form['response_settings']['donation_tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available sustainer message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['response_settings']['donation_tokens']['help'] = array(
-    '#value' => theme('token_help', 'quick_donate'),
-  );
-  
-  // Sustainer upgrade response
-  $form['response_settings']['quick_donate_sustainer_upgrade_response'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Sustainer upgrade response message (text only, no markup)'),
-    '#description' => t(''),
-    '#default_value' => variable_get('quick_donate_sustainer_upgrade_response', t('')),
-  );
-  $form['response_settings']['sustainer_upgrade_tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available sustainer message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['response_settings']['sustainer_upgrade_tokens']['help'] = array(
-    '#value' => theme('token_help', 'quick_donate'),
-  );
-  
-  // Sustainer conversion response
-  $form['response_settings']['quick_donate_sustainer_conversion_response'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Sustainer conversion response message (text only, no markup)'),
-    '#description' => t(''),
-    '#default_value' => variable_get('quick_donate_sustainer_conversion_response', t('')),
-  );
-    $form['response_settings']['sustainer_conversion_tokens'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Available sustainer message tokens'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-  );
-  $form['response_settings']['sustainer_conversion_tokens']['help'] = array(
-    '#value' => theme('token_help', 'quick_donate'),
-  );
-  */
+
   return system_settings_form($form);
 }
 

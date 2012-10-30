@@ -82,6 +82,15 @@ function quick_donate_uninstall() {
   variable_del('quick_donate_registration_subject');
   variable_del('quick_donate_registration_html_email');
   variable_del('quick_donate_registration_text_email');
+  
+  variable_del('quick_donate_card_expiration_confirmations');
+  variable_del('quick_donate_card_expiration_from_address');
+  variable_del('quick_donate_card_expiration_from_name');
+  variable_del('quick_donate_card_expiration_bcc_address');
+  variable_del('quick_donate_card_expiration_subject');
+  variable_del('quick_donate_card_expiration_html_email');
+  variable_del('quick_donate_card_expiration_text_email');
+  
   variable_del('quick_donate_register_sustainers');
   variable_del('quick_donate_auth_lede');
   variable_del('quick_donate_2nd_auth_period');
