@@ -32,6 +32,25 @@ function quick_donate_menu() {
     'file' => 'includes/quick_donate.admin.inc',
     'type' => MENU_NORMAL_ITEM,
   );
+  $items['admin/settings/quick_donate/settings'] = array(
+    'title' => 'Quick Donate',
+    'description' => 'Administer settings for Fundraiser quick donations',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('quick_donate_admin'),
+    'access arguments' => array('administer quick donations'),
+    'file' => 'includes/quick_donate.admin.inc',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['admin/settings/quick_donate/email'] = array(
+    'title' => 'Email settings',
+    'description' => 'Configure registration and expiration mail settings.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('quick_donate_admin_email'),
+    'access arguments' => array('administer quick donations'),
+    'file' => 'includes/quick_donate.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
   $items['quick_donate/donation'] = array(
     'title' => 'Donation',
     'page callback' => 'quick_donate_donation',
@@ -86,6 +105,14 @@ function quick_donate_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
     'file' => 'includes/quick_donate.cron.inc',
+  );
+  $items['quick_donate/interval-ahah'] = array(
+    'title' => 'AHAH callback',
+    'description' => 'AHAH callback for adding another row to the custom fields table.',
+    'type' => MENU_CALLBACK,
+    'page callback' => '_quick_donate_interval_add_ahah',
+    'access arguments' => array('administer quick donations'),
+    'file' => 'includes/quick_donate.admin.inc',
   );
   return $items;
 }
@@ -413,6 +440,35 @@ function quick_donate_register_user($uid, $registration_complete) {
   }
 }
 
+function quick_donate_send_pm_expiration_mail($uid, $pid) {
+  module_load_include('module', 'mimemail');
+  module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
+  watchdog('quick_donate', "mail send invoked, pid:$pid uid:$uid");
+  $account = user_load($uid);
+  $method = quick_donate_payment_method_load($pid);
+  $settings = quick_donate_pm_expiration_mail_settings($account);
+  
+  $settings['body'] = token_replace($settings['body'], 'quick_donate_expiration', $account, $method);
+  $settings['text'] = token_replace($settings['text'], 'quick_donate_expiration', $account, $method);
+
+  watchdog('quick_donate', 'expiration message settings:<pre>' . print_r($settings, TRUE) . '</pre>');
+  // mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
+  
+}
+
+/**
+ * update expiration table with latest checked interval
+ *
+ * @param $pid
+ * Payment method id.
+ *
+ * @param $interval
+ * Latest expiration interval checked.
+ */
+function quick_donate_update_expiration_interval($pid, $interval) {
+   db_query('UPDATE {quick_donate_pm_expiration} SET last_interval_checked = %d WHERE pid = %d', $interval, $pid);
+}
+
 /**
  * Create a preformatted array of mail settings for use with mimemail().
  */
@@ -429,9 +485,25 @@ function quick_donate_registration_mail_settings($account) {
       'Bcc' => variable_get('quick_donate_registration_bcc_address', ''),
     ),
     'text' => variable_get('quick_donate_registration_text_email', ''),
-  
   );
-  
+}
+
+function quick_donate_pm_expiration_mail_settings($account) {
+  // TODO: if performance issues are encountered sending expiration mails, one possible
+  //       optimization would be converting settings to a static array and merely updating recipient.
+  return array(
+    'sender' => array(
+      'name' => variable_get('quick_donate_card_expiration_from_name', ''),
+      'mail' => variable_get('quick_donate_card_expiration_from_address', ''),
+    ),
+    'recipient' => $account->mail,
+    'subject' => variable_get('quick_donate_card_expiration_subject', ''),
+    'body' => variable_get('quick_donate_card_expiration_html_email', ''),
+    'headers' => array(
+      'Bcc' => variable_get('quick_donate_card_expiration_bcc_address', ''),
+    ),
+    'text' => variable_get('quick_donate_card_expiration_text_email', ''),
+  );
 }
 
 function quick_donate_user_is_registered($uid, $cache = TRUE) {
@@ -495,7 +567,7 @@ function _quick_donate_fundraiser_order_data($param) {
 
 function quick_donate_save_payment_method($uid, $gateway_id, $ref_token, $order_id, $sid) {
   $order = uc_order_load($order_id);
-  $data = is_array($data) ? serialize($data) : $data;
+  
   db_query("
      INSERT INTO {quick_donate_payment_methods} (
        uid,
@@ -529,8 +601,10 @@ function quick_donate_save_payment_method($uid, $gateway_id, $ref_token, $order_
     $order->billing_zone,
     $order->billing_postal_code,
     $order->billing_country
-    );
+  );
   
+  $pid = db_result(db_query('SELECT MAX(pid) FROM {quick_donate_payment_methods}'));
+
   // copy cc data from uc_orders, sidesteps around issues with serialize()
   db_query('
     UPDATE {quick_donate_payment_methods}
@@ -541,7 +615,26 @@ function quick_donate_save_payment_method($uid, $gateway_id, $ref_token, $order_
     )
     WHERE order_id = %d', $order_id, $order_id);
    
+  // complete registration if incomplete at this time.
   db_query('UPDATE {quick_donate_registration} SET registration_complete = 1 WHERE uid = %d', $uid);
+  
+  // add entry to expiration warning table
+  $data = uc_credit_cache('save', $order->data['cc_data'], TRUE);
+  $expiration_timestamp = _quick_donate_calculate_expiration_timestamp($data['cc_exp_month'], $data['cc_exp_year']);
+  db_query('
+    INSERT INTO {quick_donate_pm_expiration} (
+      pid,
+      uid,
+      expiration_timestamp,
+      last_interval_checked
+    )
+    VALUES (
+      %d,
+      %d,
+      %d,
+      ""
+    )
+  ', $pid, $uid, $expiration_timestamp);
 }
 
 function quick_donate_update_payment_method($pid, $details) {
@@ -554,6 +647,9 @@ function quick_donate_update_payment_method($pid, $details) {
   $data['cc_data']['cc_exp_year'] = $details['card_exp_date']['year'];
   $data['cc_data']['cc_cvv'] = $details['card_cvv'];
   $data['cc_data'] = $crypt->encrypt(uc_credit_encryption_key(), serialize($data['cc_data']));
+  
+  $expiration_timestamp = _quick_donate_calculate_expiration_timestamp($data['cc_data']['cc_exp_month'], $data['cc_data']['cc_exp_year']);
+  
   uc_store_encryption_errors($crypt, 'uc_credit');
   
   $data = serialize($data);
@@ -584,6 +680,8 @@ function quick_donate_update_payment_method($pid, $details) {
      $data,
      $pid
    );
+   
+   db_query('UPDATE {quick_donate_pm_expiration} SET expiration_timestamp = %d, last_interval_checked = "" WHERE pid = %d', $expiration_timestamp, $pid);
 }
 
 function quick_donate_delete_payment_method($pid, $uid) {
@@ -593,6 +691,8 @@ function quick_donate_delete_payment_method($pid, $uid) {
       AND uid = %d
   ', $pid, $uid);
 
+  db_query('DELETE FROM {quick_donate_pm_expiration} WHERE pid =%d', $pid);
+  
   $methods = quick_donate_load_payment_methods($uid, FALSE);
   if (!$methods) {
     quick_donate_delete_registration($uid);
@@ -793,8 +893,21 @@ function quick_donate_login_link($uid, $html = TRUE) {
   $hash = user_pass_rehash($account->pass, $timestamp, $account->login);
   $url = url("user/reset/$uid/$timestamp/$hash/login", array('absolute' => TRUE));
   $link = l(t('Click on this link to login to the site and change your password.'), $url);
-  $text = t('This is a one-time login for %user_name and will expire on %expiration_date.' . $link, array('%user_name' => $account->name, '%expiration_date' => format_date($timestamp + $timeout)));
-  return $html ? $text : $url;
+  $markup = t('This is a one-time login for %user_name and will expire on %expiration_date.' . $link, array('%user_name' => $account->name, '%expiration_date' => format_date($timestamp + $timeout)));
+  return $html ? $markup : $url;
+}
+
+
+function quick_donate_payment_method_update_link($uid, $pid, $html = TRUE) {
+  $options = array(
+    'query' => array('destination' => "user/$uid/payment_methods/$pid/edit"),
+    'absolute' => TRUE,
+  );
+  $url = url("user/login", $options);
+  
+  $markup = l(t('Click on this link to log in and update your payment method details.'), $url);
+  
+  return $html ? $markup : $url;
 }
 
 /**
@@ -804,6 +917,12 @@ function quick_donate_token_list($type = 'all') {
   if ($type == 'quick_donate' || $type == 'all') {
     $tokens['quick_donate']['login-link-html'] = t('HTML version of the one-time log in link.');
     $tokens['quick_donate']['login-link-text'] = t('text-only version of the one-time log in link.');
+  
+  }
+  if ($type == 'quick_donate_expire' || $type == 'all') {
+    $tokens['quick_donate_expiration']['quick-donate-expiration-interval'] = t('Card expiration interval in days.');
+    $tokens['quick_donate_expiration']['quick-donate-expiration-update-link-html'] = t('HTML version of payment method update link.');
+    $tokens['quick_donate_expiration']['quick-donate-expiration-update-link-text'] = t('text-only version of payment method update link.');
   }
   return $tokens;
 }
@@ -820,6 +939,11 @@ function quick_donate_token_values($type, $object = NULL) {
         $values['login-link-html'] = quick_donate_login_link($object->uid);
         $values['login-link-text'] = quick_donate_login_link($object->uid, FALSE);
       }
+      break;
+    case 'quick_donate_expire':
+      $values['quick-donate-expiration-interval'] = $object->interval;
+      $values['quick-donate-expiration-update-link-html'] = quick_donate_payment_method_update_link($object->uid);
+      $values['quick-donate-expiration-update-link-html'] = quick_donate_payment_method_update_link($object->uid, FALSE);
       break;
   }
   return $values;
@@ -1055,6 +1179,10 @@ function quick_donate_theme() {
       'arguments' => array('payment_method' => NULL, 'nid' => NULL),
       'template' => 'templates/quick_donate-account-details',
     ),
+    'quick_donate_interval_table' => array(
+      'arguments' => array('element' => NULL),
+      'file' => 'quick_donate.admin.inc',
+    ),
   );
 }
 
@@ -1162,4 +1290,11 @@ function quick_donate_2nd_auth_validate() {
     unset($_SESSION['quick_donate_2nd_auth']);
   }
   return $auth;
+}
+
+
+function _quick_donate_calculate_expiration_timestamp($month, $year) {
+  $date = "$month/1/$year";
+  $timestamp = strtotime($date);
+  return $timestamp;
 }

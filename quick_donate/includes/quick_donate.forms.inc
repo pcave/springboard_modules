@@ -149,7 +149,6 @@ function quick_donate_validate_donation(&$form, $form_state) {
  * ask amounts, user profile settings, and the user's payment method details.
  */
 function quick_donate_process_donation($form, $form_state) {
-   drupal_set_message('values:<pre>' . print_r($form_state['values'], TRUE) . '</pre>');
     global $user;
     $account = $user;
     if (!isset($account->quick_donate_registered)) {
@@ -157,7 +156,6 @@ function quick_donate_process_donation($form, $form_state) {
     }
 
     $method = quick_donate_payment_method_load($form_state['values']['method_select']);
-    drupal_set_message('method:<pre>' . print_r($method, TRUE) . '</pre>');
     $nid = $form_state['values']['webform_nid'];
     $node = node_load(array('nid' => $nid));
     $ask_amount = is_numeric($form_state['values']['amount']) ? $form_state['values']['amount'] : $form_state['values']['other_amount'];
@@ -317,7 +315,6 @@ function quick_donate_register($edit, $nid, $sid) {
   $data = serialize($order->data);
 
   $uid = $order->uid;
-  drupal_set_message("form build uid:$uid");
   $ref_token = _quick_donate_get_token_from_order($order);
 
   $form['nid'] = array(
@@ -689,8 +686,6 @@ function quick_donate_validate_edit_payment_method(&$form, &$form_state) {
 function quick_donate_submit_edit_payment_method($form, $form_state) {
   module_load_include('inc', 'fundraiser', 'fundraiser_billing');
   $values = $form_state['values'];
-
-  //$payment_details = _fundraiser_get_payment_details($values['order_id']);
 
   $billing_info = array(
     'master_order_id' =>  $values['order_id'],

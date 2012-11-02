@@ -264,5 +264,37 @@ function quick_donate_schema() {
     ),
     'primary key' => array('pid'),
   );
+  // data storage to prevent duplicate warns per interval/payment method.
+  $schema['quick_donate_pm_expiration'] = array(
+    'description' => t('Stores expiration warning data.'),
+    'fields' => array(
+      'pid' => array(
+        'description' => t('Payment method id'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'expiration_timestamp' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'last_interval_checked' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+  );
   return $schema;
 }
