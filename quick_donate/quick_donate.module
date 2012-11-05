@@ -796,7 +796,10 @@ function quick_donate_nodeapi(&$node, $op, $teaser = NULL, $a4 = NULL) {
         break;
       case 'update':
         $settings = quick_donate_settings($node->nid);
-        
+        if (!isset($node->quick_donate_enabled)) {
+          // node_save() invoked by something other than the node edit form.
+          break;
+        }
         // if quick donate was enabled and has been turned off, delete components
         if (quick_donate_enabled($node->nid) && !$node->quick_donate_enabled) {
           _quick_donate_delete_components($node->nid);
