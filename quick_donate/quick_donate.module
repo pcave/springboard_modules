@@ -1209,6 +1209,8 @@ function template_preprocess_quick_donate_payment_method($vars) {
  * Set up account info template variables.
  */
 function template_preprocess_quick_donate_account_details($vars) {
+  global $user;
+  $uid = $user->uid;
   module_load_include('module', 'uc_store');
   $payment_method = $vars['payment_method'];
 
