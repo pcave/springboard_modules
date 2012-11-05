@@ -240,7 +240,7 @@ function quick_donate_user($op, $edit, &$account) {
  * Add the form elements to enable/disable quick donate registration on a donation form.
  */
 function quick_donate_form_alter(&$form, $form_state, $form_id) {
-
+  drupal_set_message('form id:' . $form_id);
   $node = isset($form['#node']) ? $form['#node'] : new stdClass();
     
   // Node edit form
@@ -300,6 +300,17 @@ function quick_donate_form_alter(&$form, $form_state, $form_id) {
   
   // If you are looking for the code that reduces donation forms to ask amount components and a submit button
   // it isn't here. Go take a look at hook_menu_alter() and quick_donate_donation_form()
+
+  // confirmation page, disable redirects if QD is enabled.
+  if ($form_id == 'fundraiser_confirmation_settings_form') {
+    $nid = $form['nid']['#value'];
+    $settings = quick_donate_settings($nid);
+    if ($settings && $settings['enabled'] == TRUE) {
+      $form['confirmation_page']['redirection']['redirect']['#options'] = array('confirmation' => t('Confirmation page'));
+      $form['confirmation_page']['redirection']['redirect']['#default_value'] = 'confirmation';
+    }
+    drupal_set_message('Confirmation page redirects are incompatible with Quick Donate and have been disabled on this form.');
+  }
 }
 
 
@@ -795,6 +806,7 @@ function quick_donate_nodeapi(&$node, $op, $teaser = NULL, $a4 = NULL) {
         }
         break;
       case 'update':
+
         $settings = quick_donate_settings($node->nid);
         if (!isset($node->quick_donate_enabled)) {
           // node_save() invoked by something other than the node edit form.
@@ -806,13 +818,18 @@ function quick_donate_nodeapi(&$node, $op, $teaser = NULL, $a4 = NULL) {
         }
         // if quick donate was disabled and has been turned on add components.
         elseif (!quick_donate_enabled($node->nid) && $node->quick_donate_enabled) {
+
           _quick_donate_create_components($node->nid);
           
           // hide the components if display is set to confirmation.
           if ($node->quick_donate_display == 'confirmation') {
             _quick_donate_hide_components($node->nid);
           }
+          
+          // revert confirmation page settings to page if set to redirect:
+          db_query("UPDATE {fundraiser} SET redirect_url = '<confirmation>' WHERE nid=%d", $node->nid);
         }
+
         // if display was changed from form to confirmation, hide components.
         if (isset($settings['display']) && $settings['display'] == 'form' && $node->quick_donate_display == 'confirmation') {
             _quick_donate_hide_components($node->nid);
