@@ -436,6 +436,7 @@ function quick_donate_register_user($uid, $registration_complete) {
     $settings = quick_donate_registration_mail_settings($account);
     $settings['body'] = token_replace($settings['body'], 'quick_donate', $account);
     $settings['text'] = token_replace($settings['text'], 'quick_donate', $account);
+    watchdog('quick_donate', t('registration mail settings array:') . '<pre>' .  print_r($settings, TRUE) . '</pre>');
     mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
   }
 }
@@ -443,7 +444,6 @@ function quick_donate_register_user($uid, $registration_complete) {
 function quick_donate_send_pm_expiration_mail($uid, $pid) {
   module_load_include('module', 'mimemail');
   module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
-  watchdog('quick_donate', "mail send invoked, pid:$pid uid:$uid");
   $account = user_load($uid);
   $method = quick_donate_payment_method_load($pid);
   $settings = quick_donate_pm_expiration_mail_settings($account);
@@ -451,8 +451,7 @@ function quick_donate_send_pm_expiration_mail($uid, $pid) {
   $settings['body'] = token_replace($settings['body'], 'quick_donate_expiration', $account, $method);
   $settings['text'] = token_replace($settings['text'], 'quick_donate_expiration', $account, $method);
 
-  watchdog('quick_donate', 'expiration message settings:<pre>' . print_r($settings, TRUE) . '</pre>');
-  // mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
+  mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
   
 }
 
@@ -1229,7 +1228,7 @@ function template_preprocess_quick_donate_account_details($vars) {
   }
   
   $vars['billing_zone'] = uc_zone_get_by_id($payment_method['billing_zone']);
-  $vars['links'][] = l(t('Click here to edit your account and payment methods.'), "user/$uid");
+  $vars['links'][] = l(t('Click here to edit your account and payment methods.'), "user/$uid/payment_methods");
   if (module_exists('secure_prepopulate')) {
     global $user;
     $vars['links'][] = l(t('Not !user? Click here to log out.', array('!user' => $payment_method['billing_first_name'])), 'secure-prepopulate/not-me/' . $vars['nid']);
