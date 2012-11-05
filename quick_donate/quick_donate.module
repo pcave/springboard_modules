@@ -248,6 +248,7 @@ function quick_donate_form_alter(&$form, $form_state, $form_id) {
 
     $nid = $node->nid;
     $settings = quick_donate_settings($nid);
+
     $form['quick_donate_settings'] = array(
       '#type' => 'fieldset',
       '#title' => t('Quick Donate settings'),
@@ -979,6 +980,8 @@ function quick_donate_preprocess_fundraiser_confirmation(&$vars) {
  * create quick donate registration webform components.
  */
 function _quick_donate_create_components($nid, $form_key = NULL) {
+
+  // Quick donate fieldset
   $fieldset = array(
     'nid' => $nid,
     'pid' => 0,
@@ -992,14 +995,11 @@ function _quick_donate_create_components($nid, $form_key = NULL) {
     'weight' => 0,
     'email' => 0,
   );
-  // we need the fid of this fieldset so we can set the pid for the other components
-  // thus we need to webform_component_insert() instead of letting fundraiser deal with it.
-  $pid = webform_component_insert($fieldset);
 
   // registration checkbox
   $registration = array(
     'nid' => $nid,
-    'pid' => $pid,
+    'pid' => '',
     'form_key' => 'quick_donate_register',
     'name' => 'Register',
     'type' => 'select',
@@ -1012,22 +1012,6 @@ function _quick_donate_create_components($nid, $form_key = NULL) {
     'weight' => 0,
     'email' => 0,
   );
-
-  
-/*  $phone = array(
-    'nid' => $nid,
-    'pid' => $pid,
-    'form_key' => 'quick_donate_phone',
-    'name' => 'Phone Number',
-    'type' => 'textfield',
-     'extra' => array(
-      'description' => '',
-      'width' => 20,
-    ),
-    'mandatory' => 0,
-    'weight' => 0,
-    'email' => 0,
-  );*/
   
   if ($form_key) {
     switch ($form_key) {
@@ -1037,19 +1021,21 @@ function _quick_donate_create_components($nid, $form_key = NULL) {
       case 'quick_donate_register':
         $fid = webform_component_insert($registeration);
         break;
-      case 'quick_donate_phone':
-        $fid = webform_component_insert($phone);
     }
     
     return $fid;
   }
-  webform_component_insert($registration);
-  webform_component_insert($phone);
-  return TRUE;
+  else {
+    $pid = webform_component_insert($fieldset);
+    $registration['pid'] = $pid;
+    webform_component_insert($registration);
+    return TRUE;
+  }
 }
 
 
 function _quick_donate_show_components($nid) {
+  
   $pid = _quick_donate_create_components($nid, 'quick_donate');
   $registration_extra = serialize(array(
     'description' => 'Sign up for Quick Donate.',
