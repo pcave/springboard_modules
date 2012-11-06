@@ -153,7 +153,7 @@ function quick_donate_dgs(&$form) {
     // parse out the form components so we can find the 'amount' field
     $component_hierarchy = fundraiser_parse_components($node->nid, $node->webform['components']);
     $amount_field =& fundraiser_find_field($form, $component_hierarchy['amount']);
-    drupal_set_message('amount field:' . print_r($amount_field, TRUE));
+
     // make sure we have the field and a good array of amounts
     if ($amount_field && $amounts) {
       $amount_field['#options'] = $amounts;
@@ -174,10 +174,10 @@ function quick_donate_validate_donation(&$form, $form_state) {
   $other_amount = $form_state['values']['other_amount'];
 
   if (!$ask_amount && !$other_amount) {
-    form_set_error('ask_amount', t('Y U NO SELECT ASK AMOUNT?'));
+    form_set_error('ask_amount', t('You must select an amount to donate.'));
   }
   elseif ($ask_amount == 'other' && (!is_numeric($other_amount) || !$other_amount)) {
-    form_set_error('other_amount', t('Y U NO ENTER OTHER AMOUNT?'));
+    form_set_error('other_amount', t('Other amount is invalid.'));
   }
 }
 
