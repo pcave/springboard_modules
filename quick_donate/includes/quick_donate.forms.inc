@@ -135,35 +135,37 @@ function quick_donate_donation_form($edit, $nid) {
   return $form;
 }
 
+/**
+ * Integrates quick donate short form with dynamic gift strings.
+ */
 function quick_donate_dgs(&$form) {
-  drupal_set_message('what what');
-  if (is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) {
-        drupal_set_message('is a thing thing');
-        $gs = $_SESSION['dynamic_gift_string_values'][$node->nid];
-        
-        // create an array of amounts to replace the defaults
-        $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
-        
-        // grab the default
-        $default = $gs['default'];
-        
-        // parse out the form components so we can find the 'amount' field
-        $component_hierarchy = fundraiser_parse_components($node->nid, $node->webform['components']);
-        $amount_field =& fundraiser_find_field($form, $component_hierarchy['amount']);
-        drupal_set_message('amount field:' . print_r($amount_field, TRUE));
-        // make sure we have the field and a good array of amounts
-        if ($amount_field && $amounts) {
-          $amount_field['#options'] = $amounts;
-          // set the default if available
-          if (is_numeric($default)) {
-            $amount_field['#default_value'] = $default;
-          }
-        }
 
-        // add a submit handler to clear out gift strings if the user donates
-        $form['#submit'][] = 'dynamic_gift_strings_submit';
+  $node = node_load(array('nid' => $form['webform_nid']['#value']));
+  if (is_array($_SESSION['dynamic_gift_string_values'][$node->nid])) {
+
+    $gs = $_SESSION['dynamic_gift_string_values'][$node->nid];
+    // create an array of amounts to replace the defaults
+    $amounts = _dynamic_gift_strings_parse_amounts($gs['amounts'], $node->show_other_amount, $node->nid);
+        
+    // grab the default
+    $default = $gs['default'];
+        
+    // parse out the form components so we can find the 'amount' field
+    $component_hierarchy = fundraiser_parse_components($node->nid, $node->webform['components']);
+    $amount_field =& fundraiser_find_field($form, $component_hierarchy['amount']);
+    drupal_set_message('amount field:' . print_r($amount_field, TRUE));
+    // make sure we have the field and a good array of amounts
+    if ($amount_field && $amounts) {
+      $amount_field['#options'] = $amounts;
+      // set the default if available
+      if (is_numeric($default)) {
+        $amount_field['#default_value'] = $default;
       }
-    
+    }
+
+    // add a submit handler to clear out gift strings if the user donates
+    $form['#submit'][] = 'dynamic_gift_strings_submit';
+  }
 }
 
 function quick_donate_validate_donation(&$form, $form_state) {
