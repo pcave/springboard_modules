@@ -240,7 +240,7 @@ function quick_donate_user($op, $edit, &$account) {
  * Add the form elements to enable/disable quick donate registration on a donation form.
  */
 function quick_donate_form_alter(&$form, $form_state, $form_id) {
-  drupal_set_message('form id:' . $form_id);
+
   $node = isset($form['#node']) ? $form['#node'] : new stdClass();
     
   // Node edit form
@@ -308,8 +308,8 @@ function quick_donate_form_alter(&$form, $form_state, $form_id) {
     if ($settings && $settings['enabled'] == TRUE) {
       $form['confirmation_page']['redirection']['redirect']['#options'] = array('confirmation' => t('Confirmation page'));
       $form['confirmation_page']['redirection']['redirect']['#default_value'] = 'confirmation';
+      drupal_set_message('Confirmation page redirects are incompatible with Quick Donate and have been disabled on this form.');
     }
-    drupal_set_message('Confirmation page redirects are incompatible with Quick Donate and have been disabled on this form.');
   }
 }
 
@@ -827,6 +827,7 @@ function quick_donate_nodeapi(&$node, $op, $teaser = NULL, $a4 = NULL) {
           }
           
           // revert confirmation page settings to page if set to redirect:
+          _quick_donate_convert_confirmation_settings($node->nid);
           db_query("UPDATE {fundraiser} SET redirect_url = '<confirmation>' WHERE nid=%d", $node->nid);
         }
 
@@ -1246,7 +1247,6 @@ function template_preprocess_quick_donate_account_details($vars) {
 
 function quick_donate_preprocess_secure_prepopulate_welcome_message($vars) {
   $email = isset($vars['values']['email']) ? $vars['values']['email'] : FALSE;
-  drupal_set_message('welcome message:' . $vars['welcome_message']);
   $vars['welcome_message'] .= ' ' . t('Log in to use Quick Donate.');
   $vars['welcome_suffix'] = l(t('Click here to log in with your username and password'), 'user/login');
 }
@@ -1312,4 +1312,12 @@ function _quick_donate_calculate_expiration_timestamp($month, $year) {
   $date = "$month/1/$year";
   $timestamp = strtotime($date);
   return $timestamp;
+}
+
+function _quick_donate_convert_confirmation_settings($nid) {
+  $url = db_result(db_query('SELECT redirect_url FROM {fundraiser} WHERE nid=%d', $nid));
+  if ($url != '<confirmation>') {
+    db_query("UPDATE {fundraiser} SET redirect_url = '<confirmation>' WHERE nid=%d", $node->nid);
+    drupal_set_message(t('Confirmation !link have been changed. Quick donate is not compatible with confirmation page redirects and has reverted !link to the defaults.', array('!link' => l(t('page settings'), "node/$nid/webform/confirmations"))));
+  }
 }
