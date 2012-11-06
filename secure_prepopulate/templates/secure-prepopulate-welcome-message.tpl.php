@@ -13,7 +13,21 @@
  * - $nid: The nid of the node for which the values apply.
  */
 ?>
-
+<?php if (isset($welcome_prefix)) : ?>
+<div id="welcome-prefix">
+  <?php print $welcome_prefix; ?>
+</div>
+<?php endif; ?>
 <div id="welcome-back">
-  Welcome back <? print $values['first_name']; ?>. Not <? print $values['first_name']; ?>? <? print l('Click here', 'secure-prepopulate/not-me/' . $nid); ?>
+  <div class="salutation">
+    <?php print $welcome_message; ?>
+  </div>
+  <div class="">
+    <?php print $not_me; ?>
+  </div>
+<?php if (isset($welcome_suffix)) : ?>
+<div id="welcome-suffix">
+  <?php print $welcome_suffix; ?>
+</div>
+<?php endif; ?>
 </div>

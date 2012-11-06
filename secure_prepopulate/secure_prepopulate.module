@@ -64,6 +64,12 @@ function secure_prepopulate_theme() {
   );
 }
 
+function secure_prepopulate_preprocess_secure_prepopulate_welcome_message($vars) {
+  $nid = arg(1);
+  $vars['welcome_message'] = t('Welcome back !user.', array('!user' => $vars['values']['first_name']));
+  $vars['not_me'] = t('Not !user? !link', array('!user' => $vars['values']['first_name'], '!link' => l('Click here', 'secure-prepopulate/not-me/' . $nid)));
+}
+
 /**
  * Implemenation of hook_node_api(). 
  * 

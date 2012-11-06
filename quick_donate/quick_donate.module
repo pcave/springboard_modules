@@ -1243,6 +1243,14 @@ function template_preprocess_quick_donate_account_details($vars) {
   }
 }
 
+
+function quick_donate_preprocess_secure_prepopulate_welcome_message($vars) {
+  $email = isset($vars['values']['email']) ? $vars['values']['email'] : FALSE;
+  drupal_set_message('welcome message:' . $vars['welcome_message']);
+  $vars['welcome_message'] .= ' ' . t('Log in to use Quick Donate.');
+  $vars['welcome_suffix'] = l(t('Click here to log in with your username and password'), 'user/login');
+}
+
 /**
  * Implements hook_fundraiser_validate_webform_enabled().
  *
