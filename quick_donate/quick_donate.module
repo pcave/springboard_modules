@@ -1309,10 +1309,21 @@ function quick_donate_2nd_auth_validate() {
 
 
 function _quick_donate_calculate_expiration_timestamp($month, $year) {
+  // credit cards expire on midnight of the last day of a given month so we add a month
+  // to the card expiration month and then subtract 1 second to get the expiration time.
+  if ($month < 12) {
+    $month += 1;
+  }
+  else {
+    $month = 1;
+    $year += 1;
+  }
   $date = "$month/1/$year";
-  $timestamp = strtotime($date);
+  $timestamp = strtotime($date) - 1;
   return $timestamp;
 }
+
+
 
 function _quick_donate_convert_confirmation_settings($nid) {
   $url = db_result(db_query('SELECT redirect_url FROM {fundraiser} WHERE nid=%d', $nid));
