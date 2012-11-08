@@ -459,8 +459,8 @@ function quick_donate_send_pm_expiration_mail($uid, $pid) {
   $account = user_load($uid);
   $account->method_pid = $pid;
   $settings = quick_donate_pm_expiration_mail_settings($account);
-  $settings['body'] = token_replace($settings['body'], 'quick_donate_expiration', $account);
-  $settings['text'] = token_replace($settings['text'], 'quick_donate_expiration', $account);
+  $settings['body'] = token_replace($settings['body'], 'quick_donate_expire', $account);
+  $settings['text'] = token_replace($settings['text'], 'quick_donate_expire', $account);
 
   mimemail($settings['sender'], $settings['recipient'], $settings['subject'], $settings['body'], FALSE, $settings['headers'], $settings['text']);
   
@@ -919,7 +919,7 @@ function quick_donate_login_link($uid, $html = TRUE) {
 
 
 function quick_donate_payment_method_update_link($uid, $pid, $html = TRUE) {
-  drupal_set_message("uid:$uid pid:$pid");
+
   $options = array(
     'query' => array('destination' => "user/$uid/payment_methods/$pid/edit"),
     'absolute' => TRUE,
@@ -941,9 +941,9 @@ function quick_donate_token_list($type = 'all') {
   
   }
   if ($type == 'quick_donate_expire' || $type == 'all') {
-    $tokens['quick_donate_expiration']['quick-donate-expiration-interval'] = t('Card expiration interval in days.');
-    $tokens['quick_donate_expiration']['quick-donate-expiration-update-link-html'] = t('HTML version of payment method update link.');
-    $tokens['quick_donate_expiration']['quick-donate-expiration-update-link-text'] = t('text-only version of payment method update link.');
+    $tokens['quick_donate']['quick-donate-expiration-interval'] = t('Card expiration interval in days.');
+    $tokens['quick_donate']['quick-donate-expiration-update-link-html'] = t('HTML version of payment method update link.');
+    $tokens['quick_donate']['quick-donate-expiration-update-link-text'] = t('text-only version of payment method update link.');
   }
   return $tokens;
 }
@@ -952,6 +952,7 @@ function quick_donate_token_list($type = 'all') {
  * Implementation of hook_token_values().
  */
 function quick_donate_token_values($type, $object = NULL) {
+
   $values = array();
   switch ($type) {
     case 'quick_donate':
@@ -962,7 +963,11 @@ function quick_donate_token_values($type, $object = NULL) {
       }
       break;
     case 'quick_donate_expire':
+      $method = quick_donate_payment_method_load($object->method_pid);
       $values['quick-donate-expiration-interval'] = $object->interval;
+      $values['quick-donate-expiration-first-name'] = $method['billing_first_name'];
+      $values['quick-donate-expiration-last-name'] = $method['billing_last_name'];
+      $values['quick-donate-expiration-cc-type'] = ucwords($method['data']['cc_data']['cc_type']);
       $values['quick-donate-expiration-update-link-html'] = quick_donate_payment_method_update_link($object->uid, $object->method_pid);
       $values['quick-donate-expiration-update-link-html'] = quick_donate_payment_method_update_link($object->uid, $object->method_pid, FALSE);
       break;

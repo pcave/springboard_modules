@@ -50,6 +50,6 @@ function _quick_donate_expiring_payment_methods($interval, $expiration_timestamp
   while ($method = db_fetch_array($results)) {
     $methods[] = $method;
   }
-  watchdog('quick_donate_cron', count($methods) . " expiring methods found.");
+  watchdog('quick_donate_cron', count($methods) . " expiring methods found for $interval day interval.");
   return $methods;
 }
