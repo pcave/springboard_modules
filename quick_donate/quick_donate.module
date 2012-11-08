@@ -342,8 +342,37 @@ function quick_donate_form_alter(&$form, $form_state, $form_id) {
       drupal_set_message('Confirmation page redirects are incompatible with Quick Donate and have been disabled on this form.');
     }
   }
+  
+  // user login forms
+  // prepopulate username if coming in from a payment method update link.
+  if ($form_id == 'user_login') {
+    if (isset($_GET['destination'])) {
+      $destination = urldecode($_GET['destination']);
+      $parts = explode('/', $destination);
+      if ($parts[0] == 'user' && $parts[2] == 'payment_methods' && $parts[4] == 'edit') {
+        if (is_numeric($parts[1])) {
+          $account = user_load((int) $parts[1]);
+          $form['name']['#default_value'] = $account->name;
+        }
+      }
+    }
+  }
+  // all user login forms update 2nd auth timeout.
+  if ($form_id == 'user_login' || $form_id == 'user_login_block') {
+    $form['#submit'][] = 'quick_donate_update_2nd_auth';
+  }
 }
 
+/**
+ * Refresh 2nd auth expiration timestamp if user is logged in.
+ */
+function quick_donate_update_2nd_auth() {
+  global $user;
+
+  if ($user->uid) {
+     $_SESSION['quick_donate_2nd_auth'] = time() + (int) variable_get('quick_donate_2nd_auth_period', 300);
+   }
+}
 
 function quick_donate_webform_validate(&$form, $form_state) {
   // Nothing to do here unless/until phone numbers become a relevant concern, then we'll need to
