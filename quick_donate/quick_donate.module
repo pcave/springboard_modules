@@ -237,8 +237,32 @@ function quick_donate_user($op, $edit, &$account) {
 /**
  * Implements hook_menu_alter().
  */
-function quick_donate_menu_alter($items) {
-  
+function quick_donate_menu_alter(&$items) {
+  $items['user/login']['access callback'] = 'quick_donate_user_login_access';
+}
+
+/**
+ * Implements hook_menu_alter().
+ *
+ * Modify access callback for user/login to redirect logged in users to edit payment methods when
+ * a payment method update link is clicked.
+ */
+function quick_donate_user_login_access() {
+
+  // per user.module, all anonymous users get a pass.
+  if (user_is_anonymous()) {
+    return TRUE;
+  }
+  else {
+    $destination = (isset($_GET['destination'])) ? urldecode($_GET['destination']) : FALSE;
+    if ($destination) {
+      $parts = explode('/', $destination);
+      if ($parts[0] == 'user' && $parts[2] == 'payment_methods' && $parts[4] == 'edit') {
+        drupal_goto($destination);
+      }
+    }
+  }
+  return FALSE;
 }
 
 /**
