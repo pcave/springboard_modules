@@ -453,11 +453,12 @@ function quick_donate_register_user($uid, $registration_complete) {
   }
 }
 
-function quick_donate_send_pm_expiration_mail($uid, $pid) {
+function quick_donate_send_pm_expiration_mail($uid, $pid, $interval) {
   module_load_include('module', 'mimemail');
   module_load_include('inc', 'mimemail', 'theme/mimemail.theme');
   $account = user_load($uid);
   $account->method_pid = $pid;
+  $account->interval = $interval;
   $settings = quick_donate_pm_expiration_mail_settings($account);
   $settings['body'] = token_replace($settings['body'], 'quick_donate_expire', $account);
   $settings['text'] = token_replace($settings['text'], 'quick_donate_expire', $account);

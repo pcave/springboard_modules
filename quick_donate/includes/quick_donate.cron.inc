@@ -24,7 +24,7 @@ function quick_donate_process_expiration_emails() {
       $expiration_timestamp = time() + (86400 * (int) trim($interval));
       $expiring_payment_methods = _quick_donate_expiring_payment_methods($interval, $expiration_timestamp);
       foreach ($expiring_payment_methods as $method) {
-        quick_donate_send_pm_expiration_mail($method['uid'], $method['pid']);
+        quick_donate_send_pm_expiration_mail($method['uid'], $method['pid'], $interval);
         quick_donate_update_expiration_interval($method['pid'], $interval);
       }
     }
