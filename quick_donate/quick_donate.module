@@ -235,6 +235,13 @@ function quick_donate_user($op, $edit, &$account) {
 
 
 /**
+ * Implements hook_menu_alter().
+ */
+function quick_donate_menu_alter($items) {
+  
+}
+
+/**
  * Implements hook_form_alter().
  *
  * Add the form elements to enable/disable quick donate registration on a donation form.
@@ -299,7 +306,7 @@ function quick_donate_form_alter(&$form, $form_state, $form_id) {
   }
   
   // If you are looking for the code that reduces donation forms to ask amount components and a submit button
-  // it isn't here. Go take a look at hook_menu_alter() and quick_donate_donation_form()
+  // it isn't here. Go take a look at hook_nodeapi() $op == 'view' and quick_donate_donation_form()
 
   // confirmation page, disable redirects if QD is enabled.
   if ($form_id == 'fundraiser_confirmation_settings_form') {
