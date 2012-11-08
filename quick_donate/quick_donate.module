@@ -944,6 +944,9 @@ function quick_donate_token_list($type = 'all') {
     $tokens['quick_donate']['quick-donate-expiration-interval'] = t('Card expiration interval in days.');
     $tokens['quick_donate']['quick-donate-expiration-update-link-html'] = t('HTML version of payment method update link.');
     $tokens['quick_donate']['quick-donate-expiration-update-link-text'] = t('text-only version of payment method update link.');
+    $tokens['quick_donate']['quick-donate-expiration-first-name'] = t('user first name');
+    $tokens['quick_donate']['quick-donate-expiration-last-name'] = t('user last name');
+    $tokens['quick_donate']['quick-donate-expiration-cc-type'] = t('credit card type');
   }
   return $tokens;
 }
