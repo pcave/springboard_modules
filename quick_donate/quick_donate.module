@@ -1033,7 +1033,7 @@ function quick_donate_token_values($type, $object = NULL) {
       $values['quick-donate-expiration-last-name'] = $method['billing_last_name'];
       $values['quick-donate-expiration-cc-type'] = ucwords($method['data']['cc_data']['cc_type']);
       $values['quick-donate-expiration-update-link-html'] = quick_donate_payment_method_update_link($object->uid, $object->method_pid);
-      $values['quick-donate-expiration-update-link-html'] = quick_donate_payment_method_update_link($object->uid, $object->method_pid, FALSE);
+      $values['quick-donate-expiration-update-link-text'] = quick_donate_payment_method_update_link($object->uid, $object->method_pid, FALSE);
       break;
   }
   return $values;
