@@ -1823,11 +1823,15 @@ function fundraiser_webform_submit($form, &$form_state) {
   );
 
   if (isset($form_state['fundraiser_reference_txn']) && isset($form_state['fundraiser_reference_txn_id'])) {
+
     $data = array(
       'txn_type' => 'reference_txn',
-      'ref_id' => $form_state['fundraiser_reference_txn_id']
-    
+      'ref_id' => $form_state['fundraiser_reference_txn_id'],
     );
+    $method_txn_id = $form_state['fundraiser_reference_txn_id'];
+  }
+  else {
+    $method_txn_id = FALSE;
   }
  	
  	// variable to hold the name of the payment gateway charge function we need to call
@@ -1851,7 +1855,7 @@ function fundraiser_webform_submit($form, &$form_state) {
  	}
  	else {
 		// failed to process credit cart
-		fundraiser_order_decline($order->order_id, $result['message']);
+		fundraiser_order_decline($order->order_id, $result['message'], $method_txn_id);
 		fundraiser_track_gateway_failure();
 		// tell webform we're not done and rebuild the form
 		unset($form_state['values']['details']['sid']);
@@ -1936,12 +1940,16 @@ function fundraiser_order_accept($order_id, $transaction_id, $message = NULL, $a
  *
  * @param $order_id
  *   The id of the order.
+ *
  * @param $message
  *   Any message that was returned by the gateway.
+ *
+ * @param $txn_id
+ *   Payment method reference id (if reference transaction)
  */
-function fundraiser_order_decline($order_id, $message) {
+function fundraiser_order_decline($order_id, $message, $txn_id = FALSE) {
   
-  module_invoke_all('fundraiser_order_failure', $order_id);
+
 
   
   // make the order as failed
@@ -1961,6 +1969,7 @@ function fundraiser_order_decline($order_id, $message) {
   if ($display_message) {
     drupal_set_message($message);
   }
+  module_invoke_all('fundraiser_order_failure', $order_id, $message, $txn_id);
 }
 
 /**

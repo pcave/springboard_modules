@@ -192,7 +192,7 @@ function quick_donate_access_payment_methods($account) {
   global $user;
   
   // No payment methods, no menu item.
-  $payment_methods = quick_donate_load_payment_methods($user->uid);
+  $payment_methods = quick_donate_load_payment_methods($user->uid, TRUE, FALSE);
   if (!count($payment_methods)) {
     return FALSE;
   }
@@ -435,7 +435,7 @@ function quick_donate_fundraiser_order_success($order) {
 
   $webform_info = _quick_donate_fundraiser_order_data($order->order_id);
   $registration = quick_donate_user_is_registered($order->uid, 'FALSE');
-  $payment_methods = quick_donate_load_payment_methods($order->uid);
+  $payment_methods = quick_donate_load_payment_methods($order->uid, TRUE);
 
   // register user if they signed up for quick donate on the donation form
   if ($registration && !$payment_methods && $ref_token) {
@@ -459,15 +459,27 @@ function quick_donate_fundraiser_order_success($order) {
  *
  * Remove partial opt-in record if an a donation including quick donate registration fails.
  */
-function quick_donate_fundraiser_order_failure($order_id) {
-  module_load_include('module', 'uc');
-  $order = uc_order_load($order_id);
-  $incomplete = quick_donate_user_registration_incomplete($order->uid);
-  if ($incomplete) {
-    quick_donate_delete_registration($order->uid, TRUE);
-  }
-  else {
-    quick_donate_disable_payment_method(array('order_id' => $order->order_id));
+function quick_donate_fundraiser_order_failure($order_id, $message, $txn_id = FALSE) {
+  //drupal_set_message('message:' . $message);
+  drupal_set_message('txn_id:' . $txn_id);
+  if ($txn_id) {
+    drupal_set_message('hook failure invoked. order:' . $order_id);
+    module_load_include('module', 'uc');
+    $order = uc_order_load($order_id);
+    drupal_set_message('order:<pre>' . print_r($order, TRUE) . '</pre>');
+    $incomplete = quick_donate_user_registration_incomplete($order->uid);
+    drupal_set_message("incomplete:$incomplete");
+    if ($incomplete) {
+      quick_donate_delete_registration($order->uid, TRUE);
+    }
+    else {
+      global $user;
+      $uid = $user->uid;
+      $pid =
+      quick_donate_disable_payment_method($txn_id);
+      drupal_set_message(t('There was a problem processing your donation: !error. For your protection the payment method used for this transaction has been disabled. Your payment method details can be managed from the !link for your user account.', array('!error' => $message, '!link' => l(t('payment methods page'), "user/$uid/payment_methods"))), 'error');
+      drupal_goto('node/' . arg(1));
+    }
   }
 }
 
@@ -764,7 +776,7 @@ function quick_donate_delete_payment_method($pid, $uid) {
 
   db_query('DELETE FROM {quick_donate_pm_expiration} WHERE pid =%d', $pid);
   
-  $methods = quick_donate_load_payment_methods($uid, FALSE);
+  $methods = quick_donate_load_payment_methods($uid, FALSE, FALSE);
   if (!$methods) {
     quick_donate_delete_registration($uid);
   }
@@ -781,12 +793,14 @@ function quick_donate_load_payment_method_data($pid) {
   return unserialize($data);
 }
 
-function quick_donate_load_payment_methods($uid, $cache = TRUE) {
+function quick_donate_load_payment_methods($uid, $cache = TRUE, $valid = TRUE) {
   static $methods = array();
  
   if (!isset($methods[$uid]) || !$cache) {
-    
-    $results = db_query("
+    unset($methods[$uid]);
+    $where = $valid ? 'AND valid = 1' : '';
+  
+    $sql = sprintf("
       SELECT
         pid,
         uid,
@@ -806,14 +820,16 @@ function quick_donate_load_payment_methods($uid, $cache = TRUE) {
         valid
       FROM {quick_donate_payment_methods}
       WHERE uid = %d
-        AND valid = 1
-      ", $uid);
+        %s
+      ", $uid, $where);
 
+    $results = db_query($sql);
     if ($results) {
       while ($method = db_fetch_array($results)) {
         $method['data'] = unserialize($method['data']);
         // unpack encrypted cc data.
         $method['data']['cc_data'] = uc_credit_cache('save', $method['data']['cc_data'], TRUE);
+        $method['current_status'] = $method['valid'] ? 'Active' : 'Disabled';
         $methods[$uid][] = $method;
       }
     }
@@ -847,7 +863,7 @@ function quick_donate_nodeapi(&$node, $op, $teaser = NULL, $a4 = NULL) {
           $account = user_load(array('uid' => $account->uid));
         }
         $settings = quick_donate_settings($node->nid);
-        $methods = quick_donate_load_payment_methods($account->uid);
+        $methods = quick_donate_load_payment_methods($account->uid, FALSE);
         if (isset($settings['enabled']) && $settings['enabled'] && $account->quick_donate_registered && $methods) {
           unset($node->content['webform']);
           if (module_exists('secure_prepopulate')) {
@@ -1339,8 +1355,8 @@ function quick_donate_user_registration_incomplete($uid) {
   return $incomplete == 1 ? FALSE : TRUE;
 }
 
-function quick_donate_disable_payment_method($pid) {
-  db_query('UPDATE {quick_donate_payment_methods} SET valid = 0 WHERE pid = 1');
+function quick_donate_disable_payment_method($txn_id) {
+  db_query("UPDATE {quick_donate_payment_methods} SET valid = 0 WHERE ref_token = '%s'", $txn_id);
 }
 
 function _quick_donate_queue_save($account) {

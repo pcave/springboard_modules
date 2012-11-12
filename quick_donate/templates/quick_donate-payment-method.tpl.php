@@ -2,7 +2,9 @@
 <?php
 if ($payment_method):
 ?>
-
+<p class="card-status <?php print $payment_method['current_status']; ?>">
+  Card status: <?php print($payment_method['current_status']); ?>
+</p>
 <p class="card-details">
 <?php print "$cc_type - $cc_number"; ?>
 </p>

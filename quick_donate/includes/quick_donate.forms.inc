@@ -18,8 +18,7 @@ function quick_donate_donation_form($edit, $nid) {
   if (!isset($account->quick_donate_registered)) {
     $account = user_load(array('uid' => $account->uid));
   }
- 
-  $payment_methods = quick_donate_load_payment_methods($account->uid);
+  $payment_methods = quick_donate_load_payment_methods($account->uid, TRUE, FALSE);
   if ($payment_methods) {
     $default_method = $payment_methods[0];
     $state = uc_zone_get_by_id($method['billing_zone']);
@@ -451,7 +450,8 @@ function quick_donate_payment_methods($account) {
   }
   
   module_load_include('module', 'fundraiser');
-  $payment_methods = quick_donate_load_payment_methods($account->uid);
+  $payment_methods = quick_donate_load_payment_methods($account->uid, FALSE, FALSE);
+
   if (count($payment_methods)) {
     foreach ($payment_methods as $payment_method) {
       $content .= theme('quick_donate_payment_method', $payment_method);
