@@ -829,7 +829,7 @@ function quick_donate_load_payment_methods($uid, $cache = TRUE, $valid = TRUE) {
         $method['data'] = unserialize($method['data']);
         // unpack encrypted cc data.
         $method['data']['cc_data'] = uc_credit_cache('save', $method['data']['cc_data'], TRUE);
-        $method['current_status'] = $method['valid'] ? 'Active' : 'Disabled';
+        $method['current_status'] = $method['valid'] ? t('Active') : t('Disabled. Please edit your credit card details so it can be re-activated.');
         $methods[$uid][] = $method;
       }
     }
