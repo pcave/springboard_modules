@@ -1,27 +1,6 @@
 <?php
 
 /**
- * Get an instance of the API client to use in API calls.
- * @return \SpringboardAdvocacyAPIClient
- */
-function springboard_advocacy_message_action_api_client()
-{
-
-  $apiClient = &drupal_static(__FUNCTION__);
-
-  // If the API client is not saved, instantiate a new client
-  if (!isset($apiClient['client'])) {
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
-
-    $apiClient['client'] = $client;
-  }
-
-  // Return the API client instance for use in API calls
-  return $apiClient['client'];
-}
-
-/**
  * Callback handler for 'node/%/message-queue' menu item.
  *
  * Displays message queue delivery metrics and form actions for changing queue message items status.
@@ -32,14 +11,34 @@ function sba_message_action_queue_page($nid) {
   drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-queues.css');
 
   // Get the node ID/name for API calls
-  $nodeId = node_load($nid)->advocacy_id;
+  $node = node_load($nid);
+  if (!empty($node->advocacy_id)) {
+    $advocacyId = $node->advocacy_id;
+  }
 
   // Get an instance of the advocacy API client.
-  $client = springboard_advocacy_message_action_api_client();
+  $client = springboard_advocacy_api_call();
 
-  $queueReadyItems = $client->getQueueMessagesCountByStatus($nodeId, 'Ready')->data->count;
-  $queuePausedItems = $client->getQueueMessagesCountByStatus($nodeId, 'Paused')->data->count;
-  $queueCanceledItems = $client->getQueueMessagesCountByStatus($nodeId, 'Canceled')->data->count;
+  if (isset($advocacyId)) {
+    $queueReady = $client->invokeClientMethod(
+      'getQueueMessagesCountByStatus',
+      $advocacyId,
+      'ready'
+    );
+    $queuePaused = $client->invokeClientMethod(
+      'getQueueMessagesCountByStatus',
+      $advocacyId,
+      'paused'
+    );
+    $queueCanceled = $client->invokeClientMethod(
+      'getQueueMessagesCountByStatus',
+      $advocacyId,
+      'canceled'
+    );
+  }
+  $queueReadyItems = !empty($queueReady->data->count) ? $queueReady->data->count : 0;
+  $queuePausedItems = !empty($queuePaused->data->count) ? $queuePaused->data->count : 0;
+  $queueCanceledItems = !empty($queueCanceled->data->count) ? $queueCanceled->data->count : 0;
 
   // Create the tabs
   $tabs = theme('messsage_deliverability_tabs', array(
@@ -47,8 +46,13 @@ function sba_message_action_queue_page($nid) {
   ));
 
   // Render the action form for changing queue items status
-  $renderForm = drupal_get_form('sba_message_action_queues_form', $nodeId);
-  $queueActionsForm = drupal_render($renderForm);
+  if (isset($advocacyId)) {
+    $renderForm = drupal_get_form('sba_message_action_queues_form', $advocacyId);
+    $queueActionsForm = drupal_render($renderForm);
+  }
+  else {
+    $queueActionsForm = t('No actions are currently available. Advocacy ID not found.');
+  }
 
   // Setup the page theme
   $page = theme('messsage_action_queues', array(
@@ -67,10 +71,10 @@ function sba_message_action_queue_page($nid) {
  * Form handler for rendering the action form that allows changing message status.
  * @param $form
  * @param $form_state
- * @param $nodeId
+ * @param $advocacyId
  * @return mixed
  */
-function sba_message_action_queues_form($form, &$form_state, $nodeId) {
+function sba_message_action_queues_form($form, &$form_state, $advocacyId) {
 
   // Setup the bounds of the allowed and rendered queue actions
   $active = array('Pause' => t('Pause'), 'Restart' => t('Restart'), 'Cancel' => t('Cancel') );
@@ -88,7 +92,7 @@ function sba_message_action_queues_form($form, &$form_state, $nodeId) {
     '#type'          => 'value',
     '#name'          => 'node_id',
     '#title'         => t('Node Id'),
-    '#default_value' => $nodeId,
+    '#default_value' => $advocacyId,
     '#required'      => true,
   );
 
@@ -110,8 +114,7 @@ function sba_message_action_queues_form($form, &$form_state, $nodeId) {
  */
 function sba_message_action_queues_form_submit($form, &$form_state) {
   // Make the API request to queue up the CSV download
-  $apiClient = springboard_advocacy_message_action_api_client();
-
+  $apiClient = springboard_advocacy_api_call();
   if (!form_get_errors()) {
 
     $updateStatusMessage = '';
@@ -120,28 +123,38 @@ function sba_message_action_queues_form_submit($form, &$form_state) {
     // Check the submitted radio state to provide feedback and run appropriate API calls
     switch($form_state['input']['queue_update_type']) {
       case 'Pause':
-        $apiRequest = $apiClient->modifyQueueMessagesStatus($form_state['values']['node_id'], 'pause');
-        $updateStatusMessage = $apiRequest->data->items_updated == 0 ?
-          'Their are no "Ready" messages to pause delivery for.': $apiRequest->data->items_updated.' Queue message/s have been "Paused" and will not be delivered.';
-        if($apiRequest->data->items_updated == 0) {
-          $updateStatusMessageType = 'warning';
+        $apiRequest = $apiClient->invokeClientMethod('modifyQueueMessagesStatus', $form_state['values']['node_id'], 'pause');
+        if(isset($apiRequest->data)) {
+          $updateStatusMessage = $apiRequest->data->items_updated == 0 ?
+            t('Their are no "Ready" messages to pause delivery for.') :
+            t('@count Queue message/s have been "Paused" and will not be delivered.', array('@count' => $apiRequest->data->items_updated));
+          if ($apiRequest->data->items_updated == 0) {
+            $updateStatusMessageType = 'warning';
+          }
         }
         break;
       case 'Restart':
-        $apiRequest = $apiClient->modifyQueueMessagesStatus($form_state['values']['node_id'], 'restart');
-        $updateStatusMessage = $apiRequest->data->items_updated == 0 ?
-          'Their are no "Paused" messages to restart delivery for.': $apiRequest->data->items_updated.' Queue message/s are now "Ready" and are scheduled for delivery.';
-        if($apiRequest->data->items_updated == 0) {
-          $updateStatusMessageType = 'warning';
+        $apiRequest = $apiClient->invokeClientMethod('modifyQueueMessagesStatus', $form_state['values']['node_id'], 'restart');
+        if(isset($apiRequest->data)) {
+          $updateStatusMessage = $apiRequest->data->items_updated == 0 ?
+            t('Their are no "Ready" messages to retstart delivery for.') :
+            t('@count Queue message/s are now "Ready" and are scheduled to be delivered.',
+              array('@count' => $apiRequest->data->items_updated)
+            );
+          if ($apiRequest->data->items_updated == 0) {
+            $updateStatusMessageType = 'warning';
+          }
         }
         break;
       case 'Cancel':
-        $apiRequest = $apiClient->modifyQueueMessagesStatus($form_state['values']['node_id'], 'cancel');
-
-        $updateStatusMessage = $apiRequest->data->items_updated == 0 ?
-          'Their are no "Ready" messages to cancel delivery for.': $apiRequest->data->items_updated.' "Ready" Queue message/s have been "Canceled" indefinitely.';
-        if($apiRequest->data->items_updated == 0) {
-          $updateStatusMessageType = 'warning';
+        $apiRequest = $apiClient->invokeClientMethod('modifyQueueMessagesStatus', $form_state['values']['node_id'], 'cancel');
+        if(isset($apiRequest->data)) {
+          $updateStatusMessage = $apiRequest->data->items_updated == 0 ?
+            t('Their are no "Ready" messages to cancel delivery for.') :
+            t('@count Queue message/s have been "Canceled" indefinitely.', array('@count' => $apiRequest->data->items_updated));
+          if ($apiRequest->data->items_updated == 0) {
+            $updateStatusMessageType = 'warning';
+          }
         }
         break;
     }

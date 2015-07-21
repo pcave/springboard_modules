@@ -4,25 +4,25 @@
   <div class="row">
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $report->data->totalMessages; ?></h2>
+        <h2 class="text-info"><?php print $totalMessages; ?></h2>
         Total Messages
       </div>
     </div>
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $report->data->delivered; ?></h2>
+        <h2 class="text-info"><?php print $delivered; ?></h2>
         Delivered
       </div>
     </div>
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $report->data->failed; ?></h2>
+        <h2 class="text-info"><?php print $failed; ?></h2>
         Failed
       </div>
     </div>
     <div class="span3">
       <div class="well">
-        <h2 class="text-info"><?php print $report->data->deliverabilityIndexPercentage; ?></h2>
+        <h2 class="text-info"><?php print $percentage; ?></h2>
         Deliverablity
       </div>
     </div>

@@ -135,7 +135,7 @@ function sba_message_action_taxonomy_access() {
 function sba_message_action_report_access($nid) {
   $node = node_load($nid);
 
-  if ($node->type == 'sba_message_action' && user_access('view springboard advocacy reports')) {
+  if (isset($node->type) && $node->type == 'sba_message_action' && user_access('view springboard advocacy reports')) {
     return TRUE;
   }
   return FALSE;

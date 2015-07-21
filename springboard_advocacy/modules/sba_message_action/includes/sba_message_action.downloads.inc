@@ -1,33 +1,11 @@
 <?php
 
 /**
- * Get an instance of the API client to use in API calls.
- * @return \SpringboardAdvocacyAPIClient
- */
-function springboard_advocacy_message_action_api_client()
-{
-
-  $apiClient = &drupal_static(__FUNCTION__);
-
-  if (!isset($apiClient['client'])) {
-
-    $loader = new AdvocacyApiClientLoader();
-    $client = $loader->getClient();
-
-    $apiClient['client'] = $client;
-  }
-
-  return $apiClient['client'];
-}
-
-/**
  * Page callback to handle the display for the form.
  * @param $nid
  * @return array|mixed
  */
-function sba_message_action_download_page($nodeId)
-{
-
+function sba_message_action_download_page($nodeId) {
   // CSS assets
   drupal_add_css(drupal_get_path('module', 'sba_message_action') . '/css/message-downloads.css');
 
@@ -55,8 +33,7 @@ function sba_message_action_download_page($nodeId)
  * @param $nodeId
  * @return mixed
  */
-function sba_message_action_download_form($form, &$form_state, $nodeId)
-{
+function sba_message_action_download_form($form, &$form_state, $nodeId) {
 
   global $user;
 
@@ -103,10 +80,10 @@ function sba_message_action_download_form_submit($form, &$form_state)
     $emailAddress = $form_state['input']['csv_messages_download_email'];
 
     // Make the API request to queue up the CSV download
-    $apiClient = springboard_advocacy_message_action_api_client();
-    $apiRequest = $apiClient->getFailedMessagesDownload($messageNodeId, $emailAddress);
+    $apiClient = springboard_advocacy_api_call();
+    $apiRequest = $apiClient->invokeClientMethod('getFailedMessagesDownload', $messageNodeId, $emailAddress);
 
-    if ($apiRequest->data == 'Download queued.') {
+    if (isset($apiRequest->data) && $apiRequest->data == 'Download queued.') {
       drupal_set_message('Thanks! Your request has been submitted. You will receive an email shortly with a link to download the failed messages.');
     } else {
       drupal_set_message('Sorry, your request did not go through. Please try again later.', 'error');
