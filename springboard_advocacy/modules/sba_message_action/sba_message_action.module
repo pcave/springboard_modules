@@ -199,8 +199,8 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
         foreach ($node->messages as $message) {
           if (empty($message->data['recipients'])) {
             drupal_set_message(t('This action contains one or more messages that have no targets. Don\'t forget to assign targets before publishing!'), 'warning');
+            break;
           }
-          break;
         }
       }
     }
