@@ -193,6 +193,16 @@ function sba_message_action_node_view($node, $view_mode, $langcode) {
         $items = implode(', ', $unconfigured);
         drupal_set_message(t('Smarty Streets API is not <a href="!url">configured</a>. Addresses will not be verified.  There are empty values in :items.', array('!url' => url('admin/config/services/advocacy'), ':items' => $items)), 'warning');
       }
+
+      // Warn of messages with no targets.
+      if (!empty($node->messages)) {
+        foreach ($node->messages as $message) {
+          if (empty($message->data['recipients'])) {
+            drupal_set_message(t('This action contains one or more messages that have no targets. Don\'t forget to assign targets before publishing!'), 'warning');
+          }
+          break;
+        }
+      }
     }
 
     // Add the modal JS and data to multiple-message nodes.
