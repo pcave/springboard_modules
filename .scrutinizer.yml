@@ -1,6 +1,8 @@
 build:
     environment:
         timezone: 'US/Eastern'
+        selenium:
+            version: 2.53
         php:
             version: 5.6.16
             ini:
@@ -59,8 +61,8 @@ build:
             - 'sudo composer self-update'
             - 'if [ -n "${GITHUB_ACCESS_TOKEN}" ]; then composer global config github-oauth.github.com $GITHUB_ACCESS_TOKEN; fi'
             - 'composer global require --update-no-dev drush/drush:6.5.0'
-            - 'wget http://selenium-release.storage.googleapis.com/2.53/selenium-server-standalone-2.53.0.jar'
-            - "xvfb-run -a -s '-screen 0 1024x768x16' java -Xmx512m -jar selenium-server-standalone-2.53.0.jar >> artifacts/selenium.log 2>&1 &"
+#            - 'wget http://selenium-release.storage.googleapis.com/2.53/selenium-server-standalone-2.53.0.jar'
+#            - "xvfb-run -a -s '-screen 0 1024x768x16' java -Xmx512m -jar selenium-server-standalone-2.53.0.jar >> artifacts/selenium.log 2>&1 &"
             - 'mysql -uroot -e "CREATE DATABASE springboard"'
             - 'sudo apt-get install ack-grep -y'
     project_setup:
@@ -120,6 +122,7 @@ tools:
             laxbreak: true
             evil: true
             funcscope: true
+            eqeqeq: false
         filter:
             paths:
                 - '*.js'
