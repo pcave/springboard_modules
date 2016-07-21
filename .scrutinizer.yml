@@ -113,6 +113,12 @@ filter:
 tools:
     js_hint:
         enabled: true
+        config:
+            eqnull: true
+            asi: true
+            laxbreak: true
+            evil: true
+            funcscope: true
         filter:
             paths:
                 - '*.js'
@@ -139,7 +145,7 @@ tools:
                 too_many_methods:     false
                 excessive_class_complexity:  false
             design_rules:
-                exit_expression:      true
+                exit_expression:      false
                 eval_expression:      true
                 goto_statement:       true
                 number_of_class_children:  true
