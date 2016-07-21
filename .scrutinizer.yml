@@ -2,7 +2,7 @@ build:
     environment:
         timezone: 'US/Eastern'
         php:
-            version: 5.4.30
+            version: 5.5.25
             ini:
                 allow_url_fopen: "On"
                 allow_url_include: "Off"
@@ -69,7 +69,7 @@ build:
             - 'find . -type f \( -name "*.php" -or -name "*.module" -or -name "*.install" -or -name "*.inc" -or -name "*.profile" -or -name "*.test" -or -name "*.theme" \) -print0 | xargs -0 -n1 -P8 php -l'
             # Negate the return value of ack, because not finding these
             # strings should be a pass.
-            - '! ack-grep -i "<<<<<<<|^=======$|>>>>>>>|dpm\(|dsm\(|var_dump\(|var_export\(|debug\(|dpq|dvm|dpr\(|kpr|dvr|kprint_r|dprint_r|devel_render|ddebug_backtrace|debug_backtrace|debug_print_backtrace|debug_to_file" --ignore-file=ext:txt,html,yml,js'
+            - '! ack-grep -i "<<<<<<<|^=======$|>>>>>>>|dpm\(|dsm\(|var_dump\(|var_export\(|[^set]debug\(|dpq|dvm|dpr\(|kpr|dvr|kprint_r|dprint_r|devel_render|ddebug_backtrace|debug_backtrace|debug_print_backtrace|debug_to_file" --ignore-file=ext:txt,html,yml,js'
             - 'cd'
             - 'mv build repo'
             - 'git clone --depth 1 --branch 7.x-4.x https://github.com/JacksonRiver/Springboard-Build.git build-tools'
@@ -93,9 +93,9 @@ build:
             - 'cd ~/build'
             - 'drush -l http://local.dev status'
             - 'curl --max-time 20 http://local.dev | grep "DONATE"'
-            - 'drush -l http://local.dev en springboard_tests -y'
-            - 'drush -l http://local.dev sb-test-run springboard --xml=../artifacts'
-            - 'cd ~/acceptance-tests && ./vendor/bin/codecept run --html --xml -vv'
+            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then drush -l http://local.dev en springboard_tests -y ; fi'
+            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then drush -l http://local.dev sb-test-run springboard --xml=../artifacts ; fi'
+            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then cd ~/acceptance-tests && ./vendor/bin/codecept run --html --xml -vv ; fi'
 
 filter:
     paths:
