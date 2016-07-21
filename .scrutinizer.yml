@@ -83,7 +83,7 @@ build:
             - 'drush -l http://local.dev cc all'
             - 'drush -l http://local.dev sql-dump --result-file=../dump.sql'
             - 'cd'
-            - 'git clone --depth 1 --branch master https://github.com/JacksonRiver/acceptance-tests.git acceptance-tests'
+            - 'git clone --depth 1 --branch 7.x-4.10-beta1 https://github.com/JacksonRiver/acceptance-tests.git acceptance-tests'
             - 'cd acceptance-tests'
             - 'composer install --no-dev'
             - 'cp codeception.yml.ci codeception.yml'
@@ -95,8 +95,8 @@ build:
             - 'cd ~/build'
             - 'drush -l http://local.dev status'
             - 'curl --max-time 20 http://local.dev | grep "DONATE"'
-            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then drush -l http://local.dev en springboard_tests -y ; fi'
-            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then drush -l http://local.dev sb-test-run springboard --xml=../artifacts ; fi'
+#            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then drush -l http://local.dev en springboard_tests -y ; fi'
+#            - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then drush -l http://local.dev sb-test-run springboard --xml=../artifacts ; fi'
             - 'if [[ "$ALLOWED_BRANCHES" =~ "$SCRUTINIZER_BRANCH" ]]; then cd ~/acceptance-tests && ./vendor/bin/codecept run --html --xml -vv ; fi'
 
 filter:
