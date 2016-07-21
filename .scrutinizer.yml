@@ -113,13 +113,11 @@ filter:
 tools:
     js_hint:
         enabled: true
-        config:
-            jshint:
-                eqnull: true
-                asi: true
-                laxbreak: true
-                evil: true
-                funcscope: true
+        eqnull: true
+        asi: true
+        laxbreak: true
+        evil: true
+        funcscope: true
         filter:
             paths:
                 - '*.js'
